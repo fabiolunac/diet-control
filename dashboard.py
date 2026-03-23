@@ -6,6 +6,7 @@ from src.transform_db import calculate_macros, create_date_db
 from src.metrics import *
 from src.figures import *
 from parameters import *
+from dieta import write_diet
 
 
 def add_line_diet(conn, date, ref, alimento, quantidade):
@@ -190,7 +191,9 @@ def main():
         st.plotly_chart(fig_carbo_day, use_container_width=True)
 
     with tab4:
-        st.write('Dieta')
+        write_diet()
+
+
 
     with tab5:
         st.write('Alimentação')
