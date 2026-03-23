@@ -1,11 +1,10 @@
 import streamlit as st
 import pandas as pd
 import sqlite3
-import plotly.express as px
-import plotly.graph_objects as go
 
 from src.transform_db import calculate_macros, create_date_db
 from src.metrics import *
+from src.figures import *
 from parameters import *
 
 
@@ -45,87 +44,6 @@ def personalize_metric():
     }
     </style>
     """, unsafe_allow_html=True)
-
-
-def comparative_figure(df, type):
-    fig = go.Figure()
-    # Parte consumida
-    fig.add_bar(
-        x=df['Refs'],
-        y=df[type],
-        name='Consumido'
-    )
-    # Parte faltante (vermelho claro)
-    fig.add_bar(
-        x=df['Refs'],
-        y=df['Delta'],
-        name='Falta',
-        marker_color='rgba(255, 0, 0, 0.2)'
-        # text=f'{df['Completed']}%'
-    )
-
-    fig.update_layout(
-        barmode='stack',
-        title=f'Comparativo de {type}',
-        yaxis_title='(kcal)', 
-        xaxis_title = 'Refeição'
-    )
-
-    return fig
-
-def fig_consumo_dia(df, type):
-    """
-    df: base de dados
-
-    type: Calorias (kcal), Proteínas (g), Carboidratos (g)
-    """
-    value_dia = df.groupby('Data')[type].sum().reset_index()
-
-    if type == 'Calorias (kcal)':
-        meta = CALO_META_DIA
-        unit = 'kcal'
-    elif type == 'Proteínas (g)':
-        meta = PROTEIN_META_DIA
-        unit = 'g'
-    elif type == 'Carboidratos (g)':
-        meta = CARBO_META_DIA
-        unit = 'g'
-    else:
-        'Tipo inválido'
-
-    fig = px.bar(
-        value_dia, 
-        x="Data",
-        y=type,
-        text=type
-    )
-
-    fig.update_traces(
-        texttemplate='%{text:.2f}',
-        textposition='outside'
-    )
-    fig.add_hline(
-        y=meta,
-        line_color='red',
-        line_dash='dot', 
-        line_width=3,
-        annotation_text=f'Meta: {meta}{unit}',
-        annotation_position='top right'
-    )
-    fig.update_layout(
-        title=f"{type} por Dia",
-        xaxis_title="Data",
-        yaxis_title=type,
-        showlegend=False,
-        xaxis=dict(
-            tickformat="%d/%m"
-        )
-    )
-
-    return fig
-
-
-
 
 
 def main():
@@ -225,6 +143,7 @@ def main():
         st.plotly_chart(fig3, use_container_width=True)
 
     with tab3:
+        # Adicionar seletor de dia
         day_cals  = calculate_cals_day(df_diet)
         day_prot  = calculate_prot_day(df_diet)
         day_carbo = calculate_carbo_day(df_diet)
@@ -234,9 +153,11 @@ def main():
             ref_cals.append(calculate_cals_ref_day(df_diet, r))
             ref_prot.append(calculate_prot_ref_day(df_diet, r))
             ref_carbo.append(calculate_carbo_ref_day(df_diet, r))
+        
+        ref_labels = ['Dia', 'Ref1', 'Ref2', 'Ref3', 'Ref4', 'Ref5']
 
         df_cals = pd.DataFrame({
-            'Refs': ['Dia', 'Ref1', 'Ref2', 'Ref3', 'Ref4', 'Ref5'],
+            'Refs': ref_labels,
             'Calorias':[day_cals, ref_cals[0], ref_cals[1], ref_cals[2], ref_cals[3], ref_cals[4]],
             'Meta':[CALO_META_DIA, REF1_CALS_META_DIA, REF2_CALS_META_DIA, REF3_CALS_META_DIA, REF4_CALS_META_DIA, REF5_CALS_META_DIA]
         })
@@ -244,7 +165,7 @@ def main():
         df_cals['Completed'] = df_cals['Calorias']/df_cals['Meta']*100
 
         df_prot = pd.DataFrame({
-            'Refs': ['Dia', 'Ref1', 'Ref2', 'Ref3', 'Ref4', 'Ref5'],
+            'Refs': ref_labels,
             'Proteínas':[day_prot, ref_prot[0], ref_prot[1], ref_prot[2], ref_prot[3], ref_prot[4]],
             'Meta':[PROTEIN_META_DIA, REF1_PROT_META_DIA, REF2_PROT_META_DIA, REF3_PROT_META_DIA, REF4_PROT_META_DIA, REF5_PROT_META_DIA]
         })
@@ -252,13 +173,12 @@ def main():
         df_prot['Completed'] = df_prot['Proteínas']/df_prot['Meta']*100
 
         df_carbo = pd.DataFrame({
-            'Refs': ['Dia', 'Ref1', 'Ref2', 'Ref3', 'Ref4', 'Ref5'],
+            'Refs': ref_labels,
             'Carboidratos':[day_carbo, ref_carbo[0], ref_carbo[1], ref_carbo[2], ref_carbo[3], ref_carbo[4]],
             'Meta':[CARBO_META_DIA, REF1_CARBO_META_DIA, REF2_CARBO_META_DIA, REF3_CARBO_META_DIA, REF4_CARBO_META_DIA, REF5_CARBO_META_DIA]
         })
         df_carbo['Delta'] = df_carbo['Meta'] - df_carbo['Carboidratos']
         df_carbo['Completed'] = df_carbo['Carboidratos']/df_carbo['Meta']*100
-
 
         fig_cals_day = comparative_figure(df_cals, 'Calorias')
         st.plotly_chart(fig_cals_day, use_container_width=True)
