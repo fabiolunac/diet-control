@@ -20,12 +20,12 @@ def calculate_prot_day(df):
 def calculate_carbo_day(df):
     return df[(df['Data'] == dia_atual)]['Carboidratos (g)'].sum()
 
-def calculate_macros(alimento, quantidade, df_macros):
+# def calculate_macros(alimento, quantidade, df_macros):
 
-    den = (df_macros[df_macros['alimento'] == alimento]['quantidade_g'].sum())
+#     den = (df_macros[df_macros['alimento'] == alimento]['quantidade_g'].sum())
 
-    cals = (df_macros[df_macros['alimento'] == alimento]['calorias_kcal'].sum())/den * quantidade
-    prot = df_macros[df_macros['alimento'] == alimento]['proteínas_g'].sum()/den * quantidade
-    carbo = df_macros[df_macros['alimento'] == alimento]['carboidratos_g'].sum()/den * quantidade
+#     cals = (df_macros[df_macros['alimento'] == alimento]['calorias_kcal'].sum())/den * quantidade
+#     prot = df_macros[df_macros['alimento'] == alimento]['proteínas_g'].sum()/den * quantidade
+#     carbo = df_macros[df_macros['alimento'] == alimento]['carboidratos_g'].sum()/den * quantidade
 
-    return cals, prot, carbo
+#     return cals, prot, carbo
