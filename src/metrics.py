@@ -2,30 +2,50 @@ import pandas as pd
 
 dia_atual = pd.Timestamp.today().normalize()
 
-def calculate_cals_ref_day(df, ref):
-    return df[(df['Refeição'] == ref) & (df['Data'] == dia_atual)]['Calorias (kcal)'].sum()
+def calculate_cals_ref_day(df, ref, day):
+    return df[(df['Refeição'] == ref) & (df['Data'] == day)]['Calorias (kcal)'].sum()
 
-def calculate_prot_ref_day(df, ref):
-    return df[(df['Refeição'] == ref) & (df['Data'] == dia_atual)]['Proteínas (g)'].sum()
+def calculate_prot_ref_day(df, ref, day):
+    return df[(df['Refeição'] == ref) & (df['Data'] == day)]['Proteínas (g)'].sum()
 
-def calculate_carbo_ref_day(df, ref):
-    return df[(df['Refeição'] == ref) & (df['Data'] == dia_atual)]['Carboidratos (g)'].sum()
+def calculate_carbo_ref_day(df, ref, day):
+    return df[(df['Refeição'] == ref) & (df['Data'] == day)]['Carboidratos (g)'].sum()
 
-def calculate_cals_day(df):
-    return df[(df['Data'] == dia_atual)]['Calorias (kcal)'].sum()
+def calculate_cals_day(df, day):
+    return df[(df['Data'] == day)]['Calorias (kcal)'].sum()
 
-def calculate_prot_day(df):
-    return df[(df['Data'] == dia_atual)]['Proteínas (g)'].sum()
+def calculate_prot_day(df, day):
+    return df[(df['Data'] == day)]['Proteínas (g)'].sum()
 
-def calculate_carbo_day(df):
-    return df[(df['Data'] == dia_atual)]['Carboidratos (g)'].sum()
+def calculate_carbo_day(df, day):
+    return df[(df['Data'] == day)]['Carboidratos (g)'].sum()
 
-# def calculate_macros(alimento, quantidade, df_macros):
+def calculate_vals(df, ref, day, macro):
+    """
+    Calculates aggregated values of a specific metric for a given day,
+    both for the total and filtered by a specific meal.
 
-#     den = (df_macros[df_macros['alimento'] == alimento]['quantidade_g'].sum())
+    Parameters:
+    ----------
+    df : pandas.DataFrame
+        DataFrame containing diet data.
+    ref : str
+        Meal name ('Ref1, 'Ref2', 'Ref3', 'Ref4', 'Ref5').
+    day : datetime/date
+        Day to filter.
+    macro : str
+        Macro ('Calorias (kcal)', 'Proteínas (g)', 'Carboidratos (g)')
 
-#     cals = (df_macros[df_macros['alimento'] == alimento]['calorias_kcal'].sum())/den * quantidade
-#     prot = df_macros[df_macros['alimento'] == alimento]['proteínas_g'].sum()/den * quantidade
-#     carbo = df_macros[df_macros['alimento'] == alimento]['carboidratos_g'].sum()/den * quantidade
+    Returns:
+    -------
+    tuple (vals_day, vals_ref_day)
+        vals_day : float/int
+            Total sum of the metric for the selected day.
+        vals_ref_day : float/int
+            Sum of the metric for the specified meal on the same day.
+    """
+    vals_day = df[df['Data'] == day][macro].sum()
+    vals_ref_day = df[(df['Refeição'] == ref) & (df['Data'] == day)][macro].sum()
 
-#     return cals, prot, carbo
+    return vals_day, vals_ref_day
+

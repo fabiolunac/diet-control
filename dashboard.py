@@ -63,6 +63,9 @@ def main():
     df_diet = calculate_macros(df_diet, df_macros)
     df_diet['Data'] = pd.to_datetime(df_diet['Data'])
 
+
+    # df_diet['Data'] = df_diet['Data'].dt.date
+
     df_dates = create_date_db(df_diet)
 
     # TABELA FINAL
@@ -143,17 +146,49 @@ def main():
         fig3 = fig_consumo_dia(df_filtrado, 'Carboidratos (g)')
         st.plotly_chart(fig3, use_container_width=True)
 
+    # ================== PAGE 3 ==================
     with tab3:
-        # Adicionar seletor de dia
-        day_cals  = calculate_cals_day(df_diet)
-        day_prot  = calculate_prot_day(df_diet)
-        day_carbo = calculate_carbo_day(df_diet)
+        c1, c2 = st.columns(2)
+        with c1:
+            opcao_dia = st.radio(
+                'Dia', 
+                ['Hoje', 'Selecionar']
+            )
+
+        dias = sorted(df_diet['Data'].astype(str).unique(), reverse=False)
+
+        if str(dia_atual) in dias:
+            index_hoje = dias.index(str(dia_atual))
+        else:
+            index_hoje = 0  
+
+        
+        with c2:
+            dia_selecionado = st.selectbox(
+                'Selecione o dia', 
+                dias, 
+                index=index_hoje,
+                disabled= (opcao_dia != 'Selecionar')
+            )
+
+
+        if opcao_dia == 'Hoje':
+            df_day = df_diet[df_diet['Data'] == dia_atual]
+            selected_day = dia_atual
+        elif opcao_dia == 'Selecionar':
+            df_day = df_diet[df_diet['Data'] == dia_selecionado]
+            selected_day = dia_selecionado
+        
 
         ref_cals, ref_prot, ref_carbo = [], [], []
         for r in refs:
-            ref_cals.append(calculate_cals_ref_day(df_diet, r))
-            ref_prot.append(calculate_prot_ref_day(df_diet, r))
-            ref_carbo.append(calculate_carbo_ref_day(df_diet, r))
+            day_cals, r_cals = calculate_vals(df_day, r, selected_day, 'Calorias (kcal)')
+            day_prot, r_prot = calculate_vals(df_day, r, selected_day, 'Proteínas (g)')
+            day_carbo, r_carbo = calculate_vals(df_day, r, selected_day, 'Carboidratos (g)')
+
+            ref_cals.append(r_cals)
+            ref_prot.append(r_prot)
+            ref_carbo.append(r_carbo)
         
         ref_labels = ['Dia', 'Ref1', 'Ref2', 'Ref3', 'Ref4', 'Ref5']
 
