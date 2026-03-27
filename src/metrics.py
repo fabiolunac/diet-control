@@ -31,3 +31,12 @@ def calculate_vals(df, ref, day, macro):
 
     return vals_day, vals_ref_day
 
+
+def simulate_macros(df_macros, alimento, quantidade):
+    cals  = df_macros[df_macros['alimento'] == alimento]['calorias_kcal'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
+    prots = df_macros[df_macros['alimento'] == alimento]['proteínas_g'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
+    carbo = df_macros[df_macros['alimento'] == alimento]['carboidratos_g'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
+
+    return cals, prots, carbo
+
+
