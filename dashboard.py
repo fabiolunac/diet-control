@@ -94,24 +94,31 @@ def main():
 
             quantidade = st.number_input('Quantidade (g)', min_value=0.0)
 
+            c1, c2 = st.columns(2)
+            with c1:
+                bt_add =  st.button('Adicionar refeição')
 
-            if st.button('Adicionar refeição'):
+            with c2:
+                bt_simul = st.button('Calcular macros')
+
+            if bt_add:
                 if date and ref and alimento and quantidade > 0:
                     st.write(f'Adicionado: {date} {ref} - {alimento} - {quantidade}g')
                     add_line_diet(conn_diet, date, ref, alimento, quantidade)
                 else:
                     st.warning('Preencha os campos corretamente')
 
-            if st.button('Calcular macros'):
-                cals = df_macros[df_macros['alimento'] == alimento]['calorias_kcal'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
-                prots = df_macros[df_macros['alimento'] == alimento]['proteínas_g'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
-                carbo = df_macros[df_macros['alimento'] == alimento]['carboidratos_g'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
+            if bt_simul:
+                cals_simul, prot_simul, carbo_simul = simulate_macros(df_macros, alimento, quantidade)
 
-                # st.write(df_macros[df_macros['alimento'] == alimento])
-                st.write(f'{quantidade}g de {alimento}: ')
-                st.write(f'{cals}kcal') 
-                st.write(f'{prots}g de Proteína') 
-                st.write(f'{carbo}g de Carboidratos')
+                st.markdown(
+                    f"""
+                    ## {alimento} - {quantidade}g
+                    - Calorias: {cals_simul} kcal
+                    - Proteínas: {prot_simul}g
+                    - Carboidratos: {carbo_simul}g
+                    """
+                )
                 
 
 
