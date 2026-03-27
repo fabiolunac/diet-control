@@ -5,7 +5,7 @@ import sqlite3
 from src.transform_db import calculate_macros, create_date_db
 from src.metrics import *
 from src.figures import *
-from parameters import *
+from metas import *
 from dieta import write_diet
 
 
@@ -102,6 +102,18 @@ def main():
                 else:
                     st.warning('Preencha os campos corretamente')
 
+            if st.button('Calcular macros'):
+                cals = df_macros[df_macros['alimento'] == alimento]['calorias_kcal'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
+                prots = df_macros[df_macros['alimento'] == alimento]['proteínas_g'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
+                carbo = df_macros[df_macros['alimento'] == alimento]['carboidratos_g'].mean() / df_macros[df_macros['alimento'] == alimento]['quantidade_g'].mean() * quantidade
+
+                # st.write(df_macros[df_macros['alimento'] == alimento])
+                st.write(f'{quantidade}g de {alimento}: ')
+                st.write(f'{cals}kcal') 
+                st.write(f'{prots}g de Proteína') 
+                st.write(f'{carbo}g de Carboidratos')
+                
+
 
     # ================== PAGE 2 ==================
     with tab2:
@@ -178,7 +190,9 @@ def main():
         elif opcao_dia == 'Selecionar':
             df_day = df_diet[df_diet['Data'] == dia_selecionado]
             selected_day = dia_selecionado
-        
+
+        macros_labels = ['Calorias (kcal)', 'Proteínas (g)', 'Carboidratos (g)']
+    
 
         ref_cals, ref_prot, ref_carbo = [], [], []
         for r in refs:
@@ -190,7 +204,7 @@ def main():
             ref_prot.append(r_prot)
             ref_carbo.append(r_carbo)
         
-        ref_labels = ['Dia', 'Ref1', 'Ref2', 'Ref3', 'Ref4', 'Ref5']
+        ref_labels = ['Dia', 'Café', 'Almoço', 'Lanche 1', 'Lanche 2', 'Janta']
 
         df_cals = pd.DataFrame({
             'Refs': ref_labels,
@@ -215,6 +229,26 @@ def main():
         })
         df_carbo['Delta'] = df_carbo['Meta'] - df_carbo['Carboidratos']
         df_carbo['Completed'] = df_carbo['Carboidratos']/df_carbo['Meta']*100
+
+        # Merging all dfs
+        df_macro_vals = {
+            'Calorias (kcal)':df_cals,
+            'Proteínas (g)': df_prot, 
+            'Carboidratos (g)':df_carbo
+        }
+
+        # st.write(df_macro_vals)
+
+        macros_completed_day = {}
+        for m in macros_labels:
+            df = df_macro_vals[m]
+            macros_completed_day[m] = df[df['Refs'] == 'Dia']['Completed'].sum()
+
+        valor = macros_completed_day["Calorias (kcal)"]
+
+        msg = f'PARABÉNS, VOCÊ BATEU A META ({valor:.0f}%)' if valor > 80 else f'MELHORE AMANHÃ ({valor:.0f}%)'
+
+        (st.success if valor > 80 else st.error)(msg)
 
         fig_cals_day = comparative_figure(df_cals, 'Calorias')
         st.plotly_chart(fig_cals_day, use_container_width=True)

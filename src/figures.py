@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 import plotly.express as px
-from parameters import *
+from metas import *
 
 def comparative_figure(df, type):
     fig = go.Figure()

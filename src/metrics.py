@@ -2,24 +2,6 @@ import pandas as pd
 
 dia_atual = pd.Timestamp.today().normalize()
 
-def calculate_cals_ref_day(df, ref, day):
-    return df[(df['Refeição'] == ref) & (df['Data'] == day)]['Calorias (kcal)'].sum()
-
-def calculate_prot_ref_day(df, ref, day):
-    return df[(df['Refeição'] == ref) & (df['Data'] == day)]['Proteínas (g)'].sum()
-
-def calculate_carbo_ref_day(df, ref, day):
-    return df[(df['Refeição'] == ref) & (df['Data'] == day)]['Carboidratos (g)'].sum()
-
-def calculate_cals_day(df, day):
-    return df[(df['Data'] == day)]['Calorias (kcal)'].sum()
-
-def calculate_prot_day(df, day):
-    return df[(df['Data'] == day)]['Proteínas (g)'].sum()
-
-def calculate_carbo_day(df, day):
-    return df[(df['Data'] == day)]['Carboidratos (g)'].sum()
-
 def calculate_vals(df, ref, day, macro):
     """
     Calculates aggregated values of a specific metric for a given day,
