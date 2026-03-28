@@ -50,34 +50,40 @@ def personalize_metric():
 def main():
     st.title('Diet Control')
 
-    # personalize_metric()
+    # ------------ TABELA MACROS ------------
+    conn_macros = sqlite3.connect('./db/macros.db')
+    df_macros = pd.read_sql_query('SELECT * from macros', conn_macros)
+    df_macros.to_csv('diet_macros.csv')
 
-    # Tabela MACROS 
-    conn = sqlite3.connect('./db/macros.db')
-    df_macros = pd.read_sql_query('SELECT * from macros', conn)
-
-    # Tabela de controle da dieta
+    # ------------ TABELA DIETA ------------
     conn_diet = sqlite3.connect('./db/diet_control.db')
     df_diet = pd.read_sql_query('SELECT * from diet', conn_diet)
 
     df_diet = calculate_macros(df_diet, df_macros)
     df_diet['Data'] = pd.to_datetime(df_diet['Data'])
 
+    # ------------ TABELA CAFEÍNA ------------
+    conn_coff = sqlite3.connect('./db/coffein.db')
+    df_coff = pd.read_sql_query('SELECT * from coffein', conn_coff)
 
-    # df_diet['Data'] = df_diet['Data'].dt.date
+    
+    # ------------ TABELA DATAS ------------
+    df_date = pd.DataFrame({
+        'Data': pd.date_range(
+            start=df_diet['Data'].min(),
+            end='31/12/2026',
+            freq='D'
+        )
+    })
+    df_date['Mes_Ano'] = df_date['Data'].dt.to_period('M') 
 
-    df_dates = create_date_db(df_diet)
+    # ------------ TABELA DIETA FINAL ------------
+    df_diet = df_date.merge(df_diet, on='Data', how='left')
 
-    # TABELA FINAL
-    df_diet = df_dates.merge(df_diet, on='Data', how='left')
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(['Macros', 'Controle Mensal', 'Controle Diário', 'Dieta', 'Tabelas', 'Remover Dados'])
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(['Macros', 'Controle Mensal', 'Controle Diário', 'Dieta', 'Tabelas'])
-
-    # ================== PAGE 1 ==================
+    # ====================================================== PAGE 1 ======================================================
     with tab1:
-        # st.write('Macros')
-        # st.dataframe(df_macros[['alimento', 'quantidade_g', 'calorias_kcal', 'proteínas_g', 'carboidratos_g']])
-
         alimentos = df_macros['alimento'].tolist()
 
         
@@ -103,7 +109,15 @@ def main():
 
             if bt_add:
                 if date and ref and alimento and quantidade > 0:
-                    st.write(f'Adicionado: {date} {ref} - {alimento} - {quantidade}g')
+                    st.markdown(
+                        f'''
+                        ## Adicionado:
+                        - {date}
+                        - {ref}
+                        - {alimento}
+                        - {quantidade}
+                        '''
+                    )
                     add_line_diet(conn_diet, date, ref, alimento, quantidade)
                 else:
                     st.warning('Preencha os campos corretamente')
@@ -122,7 +136,7 @@ def main():
                 
 
 
-    # ================== PAGE 2 ==================
+    # ====================================================== PAGE 2 ======================================================
     with tab2:
         col1, col2 = st.columns(2)
 
@@ -165,7 +179,7 @@ def main():
         fig3 = fig_consumo_dia(df_filtrado, 'Carboidratos (g)')
         st.plotly_chart(fig3, use_container_width=True)
 
-    # ================== PAGE 3 ==================
+    # ====================================================== PAGE 3 ======================================================
     with tab3:
         c1, c2 = st.columns(2)
         with c1:
@@ -266,11 +280,12 @@ def main():
         fig_carbo_day = comparative_figure(df_carbo, 'Carboidratos')
         st.plotly_chart(fig_carbo_day, use_container_width=True)
 
+    # ====================================================== PAGE 4 ======================================================
     with tab4:
         write_diet()
 
 
-
+    # ====================================================== PAGE 5 ======================================================
     with tab5:
         st.write('Alimentação')
         df_diet['Data'] = df_diet['Data'].dt.strftime('%d/%m')
@@ -279,6 +294,50 @@ def main():
         st.write('Macros')
         st.dataframe(df_macros[['alimento', 'quantidade_g', 'calorias_kcal', 'proteínas_g', 'carboidratos_g']])
 
+        st.write('Cafeína')
+        st.dataframe(df_coff)
+
+        st.write('Remover Linhas')
+    
+    # ====================================================== PAGE 6 ======================================================
+    with tab6:
+        st.markdown('''
+        ## Remover Dados:
+        - Selecione a tabela 
+        - Selecione o ID da linha
+        - Clique no botão e voilà!
+        ''')
+        tabela = st.selectbox('Tabela', ['Macros', 'Dieta', 'Cafeína'])
+
+        if tabela == 'Dieta':
+            df = df_diet.copy()
+            nome_tabela = 'diet'
+            conn_selected = conn_diet
+        elif tabela == 'Macros':
+            df = df_macros.copy()
+            nome_tabela = 'macros'
+            conn_selected = conn_macros
+        else:
+            df = df_coff.copy()
+            nome_tabela = 'coffeine'
+            conn_selected = conn_coff
+
+        st.dataframe(df)
+
+        linha_id = st.selectbox(
+            'Selecione o ID para remover',
+            df['id']
+        )
+        if st.button('Remover'):
+            cursor = conn_selected.cursor()
+            
+            cursor.execute(
+                f"DELETE FROM {nome_tabela} WHERE id = ?",
+                (linha_id,)
+            )
+            
+            conn_selected.commit()
+            st.success('Linha removida!')
 
 
 if __name__ == "__main__":
